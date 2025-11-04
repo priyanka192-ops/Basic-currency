@@ -1,0 +1,66 @@
+import requests
+import sys 
+
+API_URL = "https://api.exchangerate-api.com/v4/latest/USD" 
+
+def get_rates():
+    """Fetches the latest exchange rates from the API."""
+    try:
+        response = requests.get(API_URL)
+        response.raise_for_status() # Raises an HTTPError for bad responses (4xx or 5xx)
+        data = response.json()
+        return data['rates']
+    except requests.exceptions.RequestException as e:
+        print(f"❌ Error fetching data. Check your network connection or API URL.")
+        print(f"Details: {e}")
+        return None
+
+def convert_currency(amount, from_currency, to_currency, rates):
+    """Performs the conversion using the fetched rates."""
+    
+    
+    from_currency = from_currency.upper()
+    to_currency = to_currency.upper()
+    
+    if from_currency in rates and to_currency in rates:
+        
+        amount_in_usd = amount / rates[from_currency]
+        
+        converted_amount = amount_in_usd * rates[to_currency]
+        return converted_amount
+    else:
+       
+        supported = ", ".join(sorted(rates.keys()))
+        return f"Currency not supported. Available codes: {supported}"
+
+def main():
+    """Main execution function to get input and display results."""
+    print("--- 💰 Simple Currency Converter ---")
+    
+   
+    rates = get_rates()
+    if rates is None:
+        
+        sys.exit(1) 
+    
+    
+    try:
+        amount = float(input("Enter the amount to convert: "))
+        from_currency = input("Convert FROM currency code (e.g., USD): ").strip()
+        to_currency = input("Convert TO currency code (e.g., EUR): ").strip()
+    except ValueError:
+        print("Invalid amount entered. Please enter a number.")
+        return
+
+    
+    result = convert_currency(amount, from_currency, to_currency, rates)
+    
+   
+    if isinstance(result, (int, float)):
+        print(f"\n✅ Result:")
+        print(f"{amount:,.2f} {from_currency.upper()} = **{result:,.2f} {to_currency.upper()}**")
+    else:
+        print(f"\n⚠️ Error: {result}")
+
+if __name__ == "__main__":
+    main()
